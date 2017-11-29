@@ -16,7 +16,7 @@ class Store {
    * Creates a new Proxy store
    * @param  {object} options An object of form {portName, state, extensionId}, where `portName` is a required string and defines the name of the port for state transition changes, `state` is the initial state of this store (default `{}`) `extensionId` is the extension id as defined by chrome when extension is loaded (default `''`)
    */
-  constructor({portName, state = {}, extensionId = ''}) {
+  constructor({portName, state = {}, extensionId = '', onDisconnect}) {
     if (!portName) {
       throw new Error('portName is required in options');
     }
@@ -59,6 +59,10 @@ class Store {
       this.port = chrome.runtime.connect(this.extensionId, {name: portName});
 
       this.port.onMessage.addListener(onMessage);
+
+      if (onDisconnect) {
+        this.port.onDisconnect.addListener(onDisconnect);
+      }
     }, 500);
 
     this.dispatch = this.dispatch.bind(this); // add this context to dispatch
