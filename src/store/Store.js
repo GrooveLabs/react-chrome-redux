@@ -34,6 +34,10 @@ class Store {
         case STATE_TYPE:
           clearInterval(intervalId);
 
+          if (onDisconnect) {
+            this.port.onDisconnect.addListener(onDisconnect);
+          }
+
           this.replaceState(message.payload);
 
           if (!this.readyResolved) {
@@ -59,10 +63,6 @@ class Store {
       this.port = chrome.runtime.connect(this.extensionId, {name: portName});
 
       this.port.onMessage.addListener(onMessage);
-
-      if (onDisconnect) {
-        this.port.onDisconnect.addListener(onDisconnect);
-      }
     }, 500);
 
     this.dispatch = this.dispatch.bind(this); // add this context to dispatch
