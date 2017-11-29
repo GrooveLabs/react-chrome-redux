@@ -26,13 +26,14 @@ class Store {
     this.readyPromise = new Promise(resolve => this.readyResolve = resolve);
 
     this.extensionId = extensionId; // keep the extensionId as an instance variable
-    this.port = chrome.runtime.connect(this.extensionId, {name: portName});
     this.listeners = [];
     this.state = state;
 
-    this.port.onMessage.addListener(message => {
+    const onMessage = (message) => {
       switch (message.type) {
         case STATE_TYPE:
+          clearInterval(intervalId);
+
           this.replaceState(message.payload);
 
           if (!this.readyResolved) {
@@ -46,9 +47,19 @@ class Store {
           break;
 
         default:
-          // do nothing
+        // do nothing
       }
-    });
+    };
+
+    const intervalId = setInterval(() => {
+      if (this.port) {
+        this.port.disconnect();
+      }
+
+      this.port = chrome.runtime.connect(this.extensionId, {name: portName});
+
+      this.port.onMessage.addListener(onMessage);
+    }, 500);
 
     this.dispatch = this.dispatch.bind(this); // add this context to dispatch
   }
