@@ -146,23 +146,32 @@ class Store {
    */
   dispatch(data) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        this.extensionId,
-        {
-          type: DISPATCH_TYPE,
-          portName: this.portName,
-          payload: data
-        }, (resp) => {
-          const {error, value} = resp;
+      try {
+        chrome.runtime.sendMessage(
+          this.extensionId,
+          {
+            type: DISPATCH_TYPE,
+            portName: this.portName,
+            payload: data
+          }, (resp) => {
+            const {error, value} = resp;
 
-          if (error) {
-            const bgErr = new Error(`${backgroundErrPrefix}${error}`);
+            if (error) {
+              const bgErr = new Error(`${backgroundErrPrefix}${error}`);
 
-            reject(assignIn(bgErr, error));
-          } else {
-            resolve(value && value.payload);
-          }
-        });
+              reject(assignIn(bgErr, error));
+            } else {
+              resolve(value && value.payload);
+            }
+          });
+      } catch (ex) {
+        if (
+          ex.message.match(/Invocation of form runtime\.connect/) &&
+          ex.message.match(/doesn't match definition runtime\.connect/)
+        ) {
+          reject('Background disconnected');
+        }
+      }
     });
   }
 }
